@@ -80,8 +80,8 @@ typedef struct
 
 typedef struct
 {
-    char bbc;     //bbc检验
-    char end;     //固定包尾0xfe
+    unsigned char bbc;     //bbc检验
+    unsigned char end;     //固定包尾0xfe
 }robot_bluetooth_send_msg_tail;
 
 typedef struct
@@ -309,13 +309,8 @@ int robot_bluetooth_message_send(int status)
 
 void ReadBuff(char *RxBuff, int len)
 {
-    printf("recv_idx:%d\n", recv_idx);
+    printf("recv_idx1:%d\n", recv_idx);
     int i;
-    if (recv_idx >= MAX_RECV_CAP - 10) //防止接收的数据过快溢出
-    {
-        recv_idx = 0;
-        recv_pos = 0;
-    }
     for (i = 0; i < len; i++)
     {
         recv_buf[recv_idx++] = RxBuff[i];
@@ -327,6 +322,7 @@ void ReadBuff(char *RxBuff, int len)
 unsigned char read_cmd(unsigned char*len, unsigned char*buff)
 {
     unsigned char i, cur, lenidx;
+    printf("recv_pos:%d, recv_idx:%d\n", recv_pos, recv_idx);
     if (recv_idx - recv_pos < 2)
     {
         printf("too short\n");
@@ -349,8 +345,7 @@ unsigned char read_cmd(unsigned char*len, unsigned char*buff)
     }
 
     lenidx = (cur + 2) % MAX_RECV_CAP;
-    printf("lxy>>lenidx:%d\n",lenidx);
-    printf("i:% d, recv_idx:% d\n", i, recv_idx);
+    printf("i:%d, recv_idx:%d\n", i, recv_idx);
     if (i >= recv_idx)   // 没找到帧头，或者只找到正头，没有获取到长度信息
     {
         printf("not find the head\n");
@@ -386,8 +381,87 @@ unsigned char read_cmd(unsigned char*len, unsigned char*buff)
         recv_idx = 0;
         recv_pos = 0;
     }
+    if (recv_idx >= MAX_RECV_CAP - 10) //防止接收的数据过快溢出
+    {
+        printf("start again\n");
+        recv_idx = 0;
+        recv_pos = 0;
+    }
     return *len;
 
+}
+
+unsigned char bt_recv_msg_parse(unsigned char* buf, unsigned char len, robot_bluetooth_msg_ctl* btrecvCtl)
+{
+    unsigned char i = 0, j = 0;
+    unsigned char cmd = -1;
+    unsigned char xorvalue = 0;
+
+    memcpy(btrecvCtl->buffer, buf, len);
+
+    for (i = 0; i < len; i++)
+    {
+        if (btrecvCtl->buffer[i] == 0xfc && btrecvCtl->buffer[i + 1] == 0x01)//包头(正常情况)
+        {
+            btrecvCtl->btmsg.msg_head = (robot_bluetooth_send_msg_head*)&(btrecvCtl->buffer[i]);
+            btrecvCtl->btmsg.msg_tail = (robot_bluetooth_send_msg_tail*)&(btrecvCtl->buffer[i + (btrecvCtl->btmsg.msg_head->length - 2)]);
+            printf("%x\n", btrecvCtl->btmsg.msg_tail->end);
+            if (btrecvCtl->btmsg.msg_tail->end != 0xfe)
+            {
+                printf("btrecvCtl->btmsg.tail->end is not 0xfe\n");
+                return 0xff;
+            }
+            for (j = 0; j < (btrecvCtl->btmsg.msg_head->length - 4); j++)
+            {
+                printf("%x ", btrecvCtl->buffer[j + i + 2]);
+                xorvalue ^= btrecvCtl->buffer[j + i + 2];
+            }
+            printf("\n");
+            printf("%x  %x\n", btrecvCtl->btmsg.msg_tail->bbc, xorvalue);
+            if (btrecvCtl->btmsg.msg_tail->bbc != xorvalue) //接收的包进行校验
+            {
+                printf("uart rf data xor err!\r\n");
+                return 0xff;
+            }
+            cmd = btrecvCtl->btmsg.msg_head->cmd_id;
+            if (btrecvCtl->btmsg.msg_head->length > sizeof(robot_bluetooth_send_msg_head) + sizeof(robot_bluetooth_send_msg_tail))
+            {
+                btrecvCtl->btmsg.buffer = &(btrecvCtl->buffer[i + sizeof(robot_bluetooth_send_msg_head)]);
+                if (btrecvCtl->btmsg.buffer == NULL)		//防止指向不到对应的内存
+                {
+                    printf("btrecvCtl->btmsg.buf is null\n");
+                    return 0xff;
+                }
+            }
+            break;
+        }
+
+    }
+
+    return cmd;
+}
+
+int parse(unsigned char *buf, unsigned char len)
+{
+    robot_bluetooth_msg_ctl* btrecv_Ctl;
+    robot_bluetooth_msg_ctl bt_ctl_recv;
+    btrecv_Ctl = &bt_ctl_recv;
+
+
+    unsigned char* final_pak = NULL;
+    final_pak = (unsigned char*)malloc(len);
+    if (final_pak == NULL)
+    {
+        return -1;
+    }
+    memcpy(final_pak, buf, len);
+    unsigned char cmd = 0;
+    
+    cmd = bt_recv_msg_parse(final_pak, len, btrecv_Ctl);
+    printf("%x\n", bt_ctl_recv.btmsg.msg_head->cmd_id);
+    printf("%x\n", cmd);
+    free(final_pak);
+    return 0;
 }
 
 int main()
@@ -398,13 +472,14 @@ int main()
     while(scanf("%d",&n),n)
     {
         robot_bluetooth_message_send(n);
-        ReadBuff(send_buf, MAX_RECV_LEN);
+        ReadBuff(send_buf, sizeof(send_buf)-1);
         read_cmd(&len, buffer);
-        printf("%d\n",len);
         for (j = 0; j < len; j++)
         {
             printf("%x ", buffer[j]);
         }
+        printf("\n");
+        parse(buffer, len);
     }
 
 }
