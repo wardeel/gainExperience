@@ -1,0 +1,159 @@
+//CloudCtrlBoxMgr/AddCloudCtrlBox
+{
+/*req, object, 消息体*/
+	"boxList":[
+	/*opt, array, 云控盒列表, range:[0,64], uniqueItems:false*/
+		{
+		/*opt, object, 数组元素*/
+			"deviceType": "",
+			/*opt, string, 外设类型, enum:[gate#闸机, lift#电梯]*/
+			"box":[
+			/*opt, array, 云控盒列表, range:[0,16], desc:非成组的设备，默认一个元素*/
+				{
+				/*opt, object, 数组元素*/
+					"serial": ""
+					/*opt, string, 云控盒序列号, range:[0,64]*/
+				}
+			],
+			"groupID": 0
+			/*opt, integer, 组ID, range:[-2147483648,2147483647]*/
+		}
+	]
+}
+
+//CloudCtrlBoxMgr/DeleteCloudCtrlBox
+{
+/*req, object, 消息体*/
+	"boxList":[
+	/*opt, array, 云控盒, range:[0,64], uniqueItems:false*/
+		{
+		/*opt, object, 数组元素值*/
+			"deviceType": "",
+			/*opt, string, 外设类型, enum:[gate#闸机, lift#电梯]*/
+			"box":[
+			/*opt, array, 云控盒列表, range:[0,16], desc:非成组的设备，默认一个元素*/
+				{
+				/*opt, object, 数组元素*/
+					"serial": ""
+					/*opt, string, 云控盒序列号, range:[0,64]*/
+				}
+			],
+			"groupID": 0
+			/*opt, integer, 组ID, range:[-2147483648,2147483647]*/
+		}
+	]
+}
+
+//CloudCtrlBoxMgr/AddCloudCtrlBoxMark
+{
+/*req, object, 消息体*/
+	"deviceList":[
+	/*opt, array, 云控盒外设信息, range:[0,16]*/
+		{
+		/*opt, object, 数组元素*/
+			"deviceType": "",
+			/*opt, string, 外设类型, enum:[gate#闸机, lift#电梯]*/
+			"device":[
+			/*opt, array, 组内设备, range:[0,16], desc:非成组的设备，默认一个元素*/
+				{
+				/*opt, object, 数组元素*/
+					"sweeperDeviceID": 0,
+					/*opt, integer, 扫地机外设ID, range:[-2147483648,2147483647]*/
+					"boxSerial": "",
+					/*opt, string, 云控盒序列号, range:[0,64]*/
+					"boxDeviceID": 0
+					/*opt, integer, 云控盒外设ID, range:[-2147483648,2147483647]*/
+				}
+			],
+			"groupID": 0
+			/*opt, integer, 组ID, range:[-2147483648,2147483647]*/
+		}
+	]
+}
+
+//CloudCtrlBoxMgr/DeleteCloudCtrlBoxMark
+{
+/*req, object, 消息体*/
+	"deviceList":[
+	/*opt, array, 云控盒外设信息, range:[0,16]*/
+		{
+		/*opt, object, 数组元素*/
+			"deviceType": "",
+			/*opt, string, 外设类型, enum:[gate#闸机, lift#电梯]*/
+			"device":[
+			/*opt, array, 组内设备, range:[0,16], desc:非成组的设备，默认一个元素*/
+				{
+				/*opt, object, 数组元素*/
+					"sweeperDeviceID": 0
+					/*opt, integer, 扫地机外设ID, range:[-2147483648,2147483647]*/
+				}
+			],
+			"groupID": 0
+			/*opt, integer, 组ID, range:[-2147483648,2147483647]*/
+		}
+	]
+}
+
+//CloudCtrlBoxMgr/CloudCtrlAbility
+{
+/*req, object, 消息体, additionalProperties:false*/
+	"ctrlAbilities":[
+	/*req, array, 控制能力, range:[0,16]*/
+		{
+		/*opt, object, 单项能力, additionalProperties:false*/
+			"deviceCtrlType": ""
+			/*opt, string, 外设控制类型, enum:[none#未选择, gateCtrl#闸机控制, liftCtrl#电梯控制]*/
+		}
+	]
+}
+
+//CloudCtrlLiftMgr/LiftFloorMap
+{
+/*req, object, 消息体, additionalProperties:false*/
+	"mapList":[
+	/*opt, array, 映射列表, range:[0,128]*/
+		{
+		/*opt, object, 数组元素, additionalProperties:false*/
+			"internalFloor": "",
+			/*req, string, 内置楼层, range:[0,32]*/
+			"externalFloor": ""
+			/*req, string, 按键显示楼层, range:[0,32]*/
+		}
+	]
+}
+
+//CloudCtrlLiftMgr/CloudCtrlBoxBindInfo
+{
+/*req, object, 消息体*/
+	"deviceList":[
+	/*opt, array, 云控盒外设信息, range:[0,16]*/
+		{
+		/*opt, object, 数组元素*/
+			"deviceType": "",
+			/*opt, string, 外设类型, enum:[gate#闸机, lift#电梯]*/
+			"device":[
+			/*opt, array, 组内设备, range:[0,16]*/
+				{
+				/*opt, object, 数组元素*/
+					"sweeperDeviceID": 0,
+					/*opt, integer, 扫地机外设ID, range:[-2147483648,2147483647]*/
+					"boxSerial": "",
+					/*opt, string, 云控盒序列号, range:[0,64]*/
+					"boxDeviceID": 0
+					/*opt, integer, 云控盒外设ID, range:[-2147483648,2147483647]*/
+				}
+			],
+			"groupID": 0
+			/*opt, integer, 组ID, range:[-2147483648,2147483647]*/
+		}
+	]
+}
+
+//CloudCtrlGateMgr/GateCtrl
+{
+/*req, object, 消息体, additionalProperties:false*/
+	"boxGateID": 0,
+	/*opt, integer, 云控盒闸机ID, range:[0,2147483647]*/
+	"action": "open"
+	/*opt, string, 操作类型, enum:[close#关闭, open#开启]*/
+}
