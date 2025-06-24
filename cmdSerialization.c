@@ -1,3 +1,10 @@
+enum
+{
+    SIG_EVENT_START,
+    SIG_EVENT_CHECK,
+    SIG_EVENT_STOP,
+};
+
 static int signal_control_fd[2];
 
 static void send_signo_to_main(int signo) {
@@ -56,7 +63,7 @@ void fibocom_LTEguard_thread(void)
         }
 
         if (ret <= 0) {
-            LTE_LOG("%s poll=%d, errno: %d (%s)", __func__, ret, errno, strerror(errno));
+            printf("%s poll=%d, errno: %d (%s)", __func__, ret, errno, strerror(errno));
             goto __main_quit;
         }
         for (ne = 0; ne < nevents; ne++) 
@@ -65,8 +72,8 @@ void fibocom_LTEguard_thread(void)
             short revents = pollfds[ne].revents;
 
             if (revents & (POLLERR | POLLHUP | POLLNVAL)) {
-                LTE_LOG("%s poll err/hup", __func__);
-                LTE_LOG("epoll fd = %d, events = 0x%04x", fd, revents);
+                printf("%s poll err/hup", __func__);
+                printf("epoll fd = %d, events = 0x%04x", fd, revents);
                 if (revents & POLLHUP)
                 {
                     goto __main_quit;
@@ -127,4 +134,19 @@ __main_quit:
     printf("%s exit", __func__);
 
     return;
+}
+
+int main()
+{
+    int ret;
+    do {
+        ret = fibocom_LTEguard_thread();
+        if (g_donot_exit_when_modem_hangup_fibocom > 0)
+        {
+            printf("restart fibocom mobile main\n");
+            sleep(20);
+        }
+    } while (g_donot_exit_when_modem_hangup_fibocom > 0);
+
+    return ret;
 }
